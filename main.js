@@ -1,16 +1,16 @@
-var date = [];
-var rawdata = [];
-var qualityDate = [];
-var erroneousDate = [];
-var testErr = [];
-var erroneousTest = [];
-var doubtfulTest = [];
-var doubtfulDate = [];
-var findErr = [];
-var startDate = [];
-var endDate = [];
+//var date = [];
+//var rawdata = [];
+// var qualityDate = [];
+// var erroneousDate = [];
+// var testErr = [];
+// var erroneousTest = [];
+// var doubtfulTest = [];
+// var doubtfulDate = [];
+// var findErr = [];
+// var startDate = [];
+// var endDate = [];
 var count = 0;
-var sensor;
+var sensorS;
 
 
 function validate(){
@@ -21,38 +21,92 @@ function validate(){
   window.location.href = "timeseries.html";
 }
 
-window.onload = function(){
-  if (window.location.href.indexOf('timeseries.html') > -1) {
-      sensor = sessionStorage.getItem('sensor')
-      $.ajax({
-              url: "http://localhost:8080/api/raw_data",
-              type: 'GET',
-              dataType: 'json', // added data type
-              success: function(res) {
-                  getData(res, 0);
-              }
-      });
-      $.ajax({
+function ajax1(){
+        return $.ajax({
+                url: "http://localhost:8080/api/raw_data",
+                type: 'GET',
+                dataType: 'json', // added data type
+                // success: function(res) {
+                //     getData(res, 0);
+                // }
+        });
+}
+
+function ajax2(){
+      return $.ajax({
                   url: "http://localhost:8080/api/fault_data",
                   type: 'GET',
                   dataType: 'json', // added data type
-                  success: function(res) {
-                      getData(res, 1);
-                  }
+                  // success: function(res) {
+                  //     getData(res, 1);
+                  // }
       });
-    }
 }
 
 
+window.onload = function(){
+  if (window.location.href.indexOf('timeseries.html') > -1) {
+    $.when(ajax1(), ajax2()).done(function(a1, a2){
+        sensorS = sessionStorage.getItem('sensor');
+        console.log(a1[0]);
+        console.log(a2[0]);
+        getData(a1[0], a2[0], 0);
+        addnew(a1[0], a2[0], 0);
+    });
+  }
+}
 
-function getData(data, type){
-  console.log(data);
-  if(type == 0){
+
+function getData(dataRaw, faultData, type){
+  //console.log(data);
+  //var date = [];
+  //var rawdata  = [];
+  var myChart = document.getElementById('myChart').getContext('2d');
+  console.log(dataRaw);
+  var sensor = sensorS;
+  console.log(sensorS);
+  processData(dataRaw, faultData, myChart, sensor);
+
+}
+
+function addnew(dataRaw, faultData, type){
+    count++;
+    if(count >= 2){
+      $.when(ajax1(), ajax2()).done(function(a1, a2){
+          sensorS = sessionStorage.getItem('sensor');
+          console.log(a1[0]);
+          console.log(a2[0]);
+          var newChartID = "nChart" + count;
+          var container = document.getElementById('container');
+          var newChart = document.createElement('canvas');
+          newChart.setAttribute("id", newChartID);
+          //newChart.setAttribute("class", "chart");
+          var e = document.getElementById("Sensor");
+          var sensor = e.options[e.selectedIndex].value;
+          console.log(container);
+          container.appendChild(newChart);
+          var myChart = document.getElementById(newChartID).getContext('2d');
+          console.log(dataRaw);
+          processData(a1[0], a2[0], myChart, sensor);
+      });
+    }
+  // var myChart = document.getElementById('nChart').getContext('2d');
+  // sensor = "wd";
+  // processData(dataRaw, faultData, myChart, sensor);
+
+}
+
+function processData(data, faultData, myChart, sensor){
+    var date = [];
+    var rawdata  = [];
+    console.log(data);
+    console.log(faultData);
     if(sensor == "wg"){
       Object.keys(data.timeseries.windgusts).forEach(function(key){
         if(key[14] == "0" && key[15] == "0"){
           date.push(key);
           rawdata.push(data.timeseries.windgusts[key]);
+          console.log(date);
         }
       });
     }
@@ -128,41 +182,7 @@ function getData(data, type){
         }
       });
     }
-    count++;
-  }
-  else{
-    for(i = 0; i < data.length; i++){
-      if(data[i].type == sensor){
-          qualityDate.push(data[i].date);
-          if(data[i].quality == 4 && data[i].date[14] == "0" && data[i].date[15] == "0"){
-            //testErr.push(data[i]);
-            erroneousDate.push(data[i].date);
-            erroneousTest.push(Object.keys(data[i].qc).reduce(function(a, b){ return data[i][a] > data[i][b] ? a : b }));
-          }
-          else if (data[i].quality == 3 && data[i].date[14] == "0" && data[i].date[15] == "0"){
-            doubtfulDate.push(data[i].date);
-            doubtfulTest.push(Object.keys(data[i].qc).reduce(function(a, b){ return data[i][a] > data[i][b] ? a : b }));
-          }
-      }
-    }
-    //testErr.push(data[5]);
-    var test = 0;
-    for(i = 0; i < qualityDate.length; i++){
-      qualityDate[i] = qualityDate[i].replace(":00.000Z", "");
-    }
-    for(i = 0; i < erroneousDate.length; i++){
-      erroneousDate[i] = erroneousDate[i].replace(":00.000Z", "");
-    }
-    for(i = 0; i < doubtfulDate.length; i++){
-      doubtfulDate[i] = doubtfulDate[i].replace(":00.000Z", "");
-    }
-    count++;
-
-  }
-  if(count == 2){
-    createChart(date, rawdata, qualityDate, erroneousDate, doubtfulDate, erroneousTest, doubtfulTest);
-  }
-
+    createChart(date, rawdata, myChart, faultData, sensor);
 
 }
 
@@ -170,13 +190,57 @@ function getMax(obj) {
   return Math.max.apply(null,Object.keys(obj));
 }
 
-function createChart(date, rawdata, qualityDate, erroneousDate, doubtfulDate, erroneousTest, doubtfulTest){
-
+function createChart(date, rawdata, myChart, data, sensor){
+ var qualityDate = [];
+ var erroneousDate = [];
+ var testErr = [];
+ var erroneousTest = [];
+ var doubtfulTest = [];
+ var doubtfulDate = [];
  var doubtfulstartDate = [];
  var findDoubt = [];
  var endDoubt = [];
+ var findErr = [];
+ var startDate = [];
+ var endDate = [];
+
+ console.log(sensor);
+ console.log(date);
+ //console.log(data.timeseries.windgusts);
+
+ for(i = 0; i < data.length; i++){
+   //console.log(data[i].type);
+   if(data[i].type == sensor){
+       //console.log(data[i]);
+       qualityDate.push(data[i].date);
+       if(data[i].quality == 4 && data[i].date[14] == "0" && data[i].date[15] == "0"){
+         //testErr.push(data[i]);
+         erroneousDate.push(data[i].date);
+         console.log(erroneousDate);
+         erroneousTest.push(Object.keys(data[i].qc).reduce(function(a, b){ return data[i][a] > data[i][b] ? a : b }));
+       }
+       else if (data[i].quality == 3 && data[i].date[14] == "0" && data[i].date[15] == "0"){
+         doubtfulDate.push(data[i].date);
+         doubtfulTest.push(Object.keys(data[i].qc).reduce(function(a, b){ return data[i][a] > data[i][b] ? a : b }));
+       }
+   }
+ }
+
+ //testErr.push(data[5]);
+ var test = 0;
+ for(i = 0; i < qualityDate.length; i++){
+   qualityDate[i] = qualityDate[i].replace(":00.000Z", "");
+ }
+ for(i = 0; i < erroneousDate.length; i++){
+   erroneousDate[i] = erroneousDate[i].replace(":00.000Z", "");
+ }
+ for(i = 0; i < doubtfulDate.length; i++){
+   doubtfulDate[i] = doubtfulDate[i].replace(":00.000Z", "");
+ }
 
  console.log(doubtfulDate);
+ console.log(erroneousDate);
+ //console.log(date);
 
  for(i = 0; i < date.length; i++){
    for(j = 0; j < doubtfulDate.length; j++){
@@ -244,7 +308,7 @@ function createChart(date, rawdata, qualityDate, erroneousDate, doubtfulDate, er
   }
   console.log(findErr.length);
 
-  function secondMax(){
+function secondMax(){
     biggest = -Infinity,
     next_biggest = -Infinity;
 
@@ -263,9 +327,7 @@ function createChart(date, rawdata, qualityDate, erroneousDate, doubtfulDate, er
       return .04;
     }
     return next_biggest;
-  }
-
-  var myChart = document.getElementById('myChart').getContext('2d');
+}
 
   let generalChart = new Chart(myChart, {
        type:'line', // bar, horizontalBar, pie, line, doughnut, radar, polarArea
