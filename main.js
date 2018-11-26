@@ -38,17 +38,13 @@ window.onload = function(){
         sensorS = sessionStorage.getItem('sensor');
         console.log(a1[0]);
         console.log(a2[0]);
-        getData(a1[0], a2[0], 0);
-        addnew(a1[0], a2[0], 0);
+        getData(a1[0], a2[0]);
     });
   }
 }
 
 
-function getData(dataRaw, faultData, type){
-  //console.log(data);
-  //var date = [];
-  //var rawdata  = [];
+function getData(dataRaw, faultData){
   var myChart = document.getElementById('myChart').getContext('2d');
   console.log(dataRaw);
   var sensor = sensorS;
@@ -57,13 +53,12 @@ function getData(dataRaw, faultData, type){
 
 }
 
-function addnew(dataRaw, faultData, type){
-    count++;
+function addnew(){
     var found = 0;
     var e = document.getElementById("Sensor");
     var sensor = e.options[e.selectedIndex].value;
     var newChartID = "nChart" + sensor;
-    if(count >= 2 && !document.getElementById(newChartID)){
+    if(!document.getElementById(newChartID)){
       $.when(ajax1(), ajax2()).done(function(a1, a2){
           sensorS = sessionStorage.getItem('sensor');
           console.log(a1[0]);
@@ -74,7 +69,6 @@ function addnew(dataRaw, faultData, type){
           console.log(container);
           container.appendChild(newChart);
           var myChart = document.getElementById(newChartID).getContext('2d');
-          console.log(dataRaw);
           processData(a1[0], a2[0], myChart, sensor);
       });
     }
