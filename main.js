@@ -1,15 +1,3 @@
-//var date = [];
-//var rawdata = [];
-// var qualityDate = [];
-// var erroneousDate = [];
-// var testErr = [];
-// var erroneousTest = [];
-// var doubtfulTest = [];
-// var doubtfulDate = [];
-// var findErr = [];
-// var startDate = [];
-// var endDate = [];
-var count = 0;
 var sensorS;
 
 
@@ -71,18 +59,18 @@ function getData(dataRaw, faultData, type){
 
 function addnew(dataRaw, faultData, type){
     count++;
-    if(count >= 2){
+    var found = 0;
+    var e = document.getElementById("Sensor");
+    var sensor = e.options[e.selectedIndex].value;
+    var newChartID = "nChart" + sensor;
+    if(count >= 2 && !document.getElementById(newChartID)){
       $.when(ajax1(), ajax2()).done(function(a1, a2){
           sensorS = sessionStorage.getItem('sensor');
           console.log(a1[0]);
           console.log(a2[0]);
-          var newChartID = "nChart" + count;
           var container = document.getElementById('container');
           var newChart = document.createElement('canvas');
           newChart.setAttribute("id", newChartID);
-          //newChart.setAttribute("class", "chart");
-          var e = document.getElementById("Sensor");
-          var sensor = e.options[e.selectedIndex].value;
           console.log(container);
           container.appendChild(newChart);
           var myChart = document.getElementById(newChartID).getContext('2d');
@@ -90,9 +78,6 @@ function addnew(dataRaw, faultData, type){
           processData(a1[0], a2[0], myChart, sensor);
       });
     }
-  // var myChart = document.getElementById('nChart').getContext('2d');
-  // sensor = "wd";
-  // processData(dataRaw, faultData, myChart, sensor);
 
 }
 

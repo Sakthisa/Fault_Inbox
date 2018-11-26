@@ -83,5 +83,5 @@ app.get('/api/fault_data', function(req, response) {
 
 // res.writeHead(200, {'Content-Type': 'application/json'});
 // res.end(JSON.stringify(body.toString()));
-
+console.log("Server listening on port 8080");
 app.listen(8080)
