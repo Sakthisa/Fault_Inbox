@@ -49,7 +49,7 @@ function getData(dataRaw, faultData){
   console.log(dataRaw);
   var sensor = sensorS;
   console.log(sensorS);
-  processData(dataRaw, faultData, myChart, sensor);
+  processData(dataRaw, faultData, myChart, sensor, "reset");
 
 }
 
@@ -61,21 +61,27 @@ function addnew(){
     if(!document.getElementById(newChartID)){
       $.when(ajax1(), ajax2()).done(function(a1, a2){
           sensorS = sessionStorage.getItem('sensor');
+          var resetID = "reset"+sensor;
           console.log(a1[0]);
           console.log(a2[0]);
           var container = document.getElementById('container');
           var newChart = document.createElement('canvas');
           newChart.setAttribute("id", newChartID);
+          var resetbutton = document.createElement('button');
+          resetbutton.setAttribute("id", resetID);
+          var t = document.createTextNode("Reset");
           console.log(container);
+          resetbutton.appendChild(t);
           container.appendChild(newChart);
+          container.appendChild(resetbutton);
           var myChart = document.getElementById(newChartID).getContext('2d');
-          processData(a1[0], a2[0], myChart, sensor);
+          processData(a1[0], a2[0], myChart, sensor, resetID);
       });
     }
 
 }
 
-function processData(data, faultData, myChart, sensor){
+function processData(data, faultData, myChart, sensor, resetID){
     var date = [];
     var rawdata  = [];
     console.log(data);
@@ -161,7 +167,7 @@ function processData(data, faultData, myChart, sensor){
         }
       });
     }
-    createChart(date, rawdata, myChart, faultData, sensor);
+    createChart(date, rawdata, myChart, faultData, sensor, resetID);
 
 }
 
@@ -169,7 +175,7 @@ function getMax(obj) {
   return Math.max.apply(null,Object.keys(obj));
 }
 
-function createChart(date, rawdata, myChart, data, sensor){
+function createChart(date, rawdata, myChart, data, sensor, resetID){
  var qualityDate = [];
  var erroneousDate = [];
  var testErr = [];
@@ -407,10 +413,6 @@ function secondMax(){
          zoom: {
              // Boolean to enable zooming
              enabled: true,
-             limits: {
-               max: 0,
-               min: 10
-             },
 
 
              // Zooming directions. Remove the appropriate direction to disable
@@ -419,6 +421,10 @@ function secondMax(){
          }
 
        }
+     });
+
+     document.getElementById(resetID).addEventListener("click", function(){
+        generalChart.resetZoom();
      });
 
      generalChart.data.datasets.push(new Object);
