@@ -11,7 +11,7 @@ var options = {
   "method": "GET",
   "hostname": "tahmoapi.mybluemix.net",
   "port": null,
-  "path": "/v1/timeseries/TA00011/rawMeasurements?startDate=2018-06-07&endDate=2018-06-11",
+  "path": "/v1/timeseries/TA00011/rawMeasurements?startDate=2018-06-07&endDate=2018-07-12",
   "headers": {
     "authorization": "Basic NldZSFlUMFhWWTdCWFpIWE43SEJLWUFaODpSazdwWnBkSjBnd3hIVkdyM2twYnBIWDZwOGZrMitwSmhoS0F4Mk5yNzdJ",
     "cache-control": "no-cache",

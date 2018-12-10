@@ -91,7 +91,7 @@ function processData(data, faultData, myChart, sensor, resetID){
         if(key[14] == "0" && key[15] == "0"){
           date.push(key);
           rawdata.push(data.timeseries.windgusts[key]);
-          console.log(date);
+          //console.log(date);
         }
       });
     }
@@ -121,18 +121,14 @@ function processData(data, faultData, myChart, sensor, resetID){
     }
     else if(sensor == "rh"){
       Object.keys(data.timeseries.relativehumidity).forEach(function(key){
-        if(key[14] == "0" && key[15] == "0"){
           date.push(key);
           rawdata.push(data.timeseries.relativehumidity[key]);
-        }
       });
     }
     else if(sensor == "ra"){
       Object.keys(data.timeseries.radiation).forEach(function(key){
-        if(key[14] == "0" && key[15] == "0"){
           date.push(key);
           rawdata.push(data.timeseries.radiation[key]);
-        }
       });
     }
     else if(sensor == "ap"){
@@ -175,6 +171,7 @@ function getMax(obj) {
   return Math.max.apply(null,Object.keys(obj));
 }
 
+
 function createChart(date, rawdata, myChart, data, sensor, resetID){
  var qualityDate = [];
  var erroneousDate = [];
@@ -198,15 +195,37 @@ function createChart(date, rawdata, myChart, data, sensor, resetID){
    if(data[i].type == sensor){
        //console.log(data[i]);
        qualityDate.push(data[i].date);
-       if(data[i].quality == 4 && data[i].date[14] == "0" && data[i].date[15] == "0"){
+       if(data[i].quality == 4){
          //testErr.push(data[i]);
          erroneousDate.push(data[i].date);
-         console.log(erroneousDate);
-         erroneousTest.push(Object.keys(data[i].qc).reduce(function(a, b){ return data[i][a] > data[i][b] ? a : b }));
+         var max = 0;
+         var maxKey;
+         for (var key in data[i].qc) {
+            if (data[i].qc.hasOwnProperty(key) && data[i].qc[key] > max) {
+                max = data[i].qc[key];
+                maxKey = key;
+                // console.log(key + " -> " + data[i].qc[key]);
+            }
+         }
+         erroneousTest.push(maxKey);
+         //console.log(erroneousDate);
+         //erroneousTest.push(Object.keys(data[i].qc).reduce(function(a, b){ return data[i][a] > data[i][b] ? a : b }));
        }
-       else if (data[i].quality == 3 && data[i].date[14] == "0" && data[i].date[15] == "0"){
+       else if (data[i].quality == 3){
          doubtfulDate.push(data[i].date);
-         doubtfulTest.push(Object.keys(data[i].qc).reduce(function(a, b){ return data[i][a] > data[i][b] ? a : b }));
+         var max = 0;
+         var maxKey;
+         for (var key in data[i].qc) {
+            if (data[i].qc.hasOwnProperty(key) && data[i].qc[key] > max) {
+                max = data[i].qc[key];
+                maxKey = key;
+                // console.log(key + " -> " + data[i].qc[key]);
+            }
+         }
+         console.log(maxKey);
+         doubtfulTest.push(maxKey);
+         //doubtfulTest.push(Object.keys(data[i].qc).reduce(function(a, b){ return data[i][a] > data[i][b] ? a : b }));
+         //console.log(doubtfulTest);
        }
    }
  }
@@ -223,8 +242,8 @@ function createChart(date, rawdata, myChart, data, sensor, resetID){
    doubtfulDate[i] = doubtfulDate[i].replace(":00.000Z", "");
  }
 
- console.log(doubtfulDate);
- console.log(erroneousDate);
+ //console.log(doubtfulDate);
+ //console.log(erroneousDate);
  //console.log(date);
 
  for(i = 0; i < date.length; i++){
@@ -235,6 +254,7 @@ function createChart(date, rawdata, myChart, data, sensor, resetID){
    }
  }
 
+//console.log(doubtfulstartDate);
 
  var sum = doubtfulstartDate[0];
  if(doubtfulstartDate.length != 0){
@@ -258,16 +278,17 @@ function createChart(date, rawdata, myChart, data, sensor, resetID){
    }
  }
 
-  console.log(date.length);
+  console.log(date);
+  console.log(erroneousDate);
   for(i = 0; i < date.length; i++){
     for(j = 0; j < erroneousDate.length; j++){
-      //console.log(date[i]);
-      //console.log(erroneousDate[j]);
       if(erroneousDate[j] == date[i]){
         startDate.push(i);
       }
     }
   }
+
+  console.log(startDate);
 
   var sum = startDate[0];
   if(startDate.length != 0){
@@ -292,6 +313,7 @@ function createChart(date, rawdata, myChart, data, sensor, resetID){
     }
   }
   console.log(findErr.length);
+  console.log(findDoubt);
 
 function secondMax(){
     biggest = -Infinity,
@@ -364,7 +386,7 @@ function secondMax(){
            yAxes: [{
              ticks: {
                min: Math.min.apply(this, rawdata),
-               max: secondMax(),
+               max: Math.max.apply(this, rawdata),
                fontColor: "black",
                stepSize: 5
              },
@@ -374,6 +396,20 @@ function secondMax(){
              }
            }],
            xAxes: [{
+             type: "time",
+             time: {
+              displayFormats: {
+                'millisecond': 'MMM DD YYYY',
+                'second': 'MMM DD YYYY',
+                'minute': 'MMM DD YYYY',
+                'hour': 'MMM DD YYYY',
+                'day': 'MMM DD YYYY',
+                'week': 'MMM DD YYYY',
+                'month': 'MMM DD YYYY',
+                'quarter': 'MMM DD YYYY',
+                'year': 'MMM DD YYYY',
+              }
+            },
              scaleLabel: {
                display: true,
                fontColor: "black",
